@@ -1,6 +1,6 @@
 # Semester-Projects-4-IoT
 
-!! DO NOT EDIT ANY FILES IN FreeRTOS AND drivers FOLDERS PLEASE! !! 
+# !! DO NOT EDIT ANY FILES IN FreeRTOS AND drivers FOLDERS PLEASE! !! 
 
 Production Pipeline steps:
 
