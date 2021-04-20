@@ -1,0 +1,6 @@
+[submodule "Semester_Project_4_IoT\\drivers"]
+	path = Semester_Project_4_IoT\\drivers
+	url = https://github.com/ihavn/IoT_Semester_project.git
+[submodule "Semester_Project_4_IoT\\FreeRTOS"]
+	path = Semester_Project_4_IoT\\FreeRTOS
+	url = https://github.com/ihavn/VIA_FreeRTOS_AVRMEGA.git
