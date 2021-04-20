@@ -43,6 +43,7 @@ void create_tasks_and_semaphores(void)
 		{
 			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
 		}
+		
 	}
 
 	xTaskCreate(
