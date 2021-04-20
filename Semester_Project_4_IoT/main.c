@@ -4,6 +4,7 @@
 *
 * Example main file including LoRaWAN setup
 * Just for inspiration :)
+* Writing here for testing.
 */
 
 #include <stdio.h>
@@ -43,8 +44,6 @@ void create_tasks_and_semaphores(void)
 		{
 			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
 		}
-		
-		
 	}
 
 	xTaskCreate(
