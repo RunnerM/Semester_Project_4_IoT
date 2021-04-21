@@ -12,7 +12,7 @@ Production Pipeline steps:
 
 # Requirements
 # Critical
--[ ]  1. As a user, I would like to have a way to monitor the temperature of my terrarium.
+- [ ]  1. As a user, I would like to have a way to monitor the temperature of my terrarium.
  
 -[ ]  2. As a user, I would like to have a way to monitor the humidity of my terrarium.
  
