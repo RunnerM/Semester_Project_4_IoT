@@ -13,8 +13,8 @@
 #include <status_leds.h>
 
 // Parameters for OTAA join - You have got these in a mail from IHA
-#define LORA_appEUI "XXXXXXXXXXXXXXX"
-#define LORA_appKEY "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+#define LORA_appEUI "65FDAA6D0706AF4E"
+#define LORA_appKEY "43EE2CF43D3D5797D3F7564263534C82"
 
 static char _out_buf[100];
 
