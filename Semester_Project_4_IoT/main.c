@@ -186,7 +186,16 @@ void initialiseSystem()
 	// Status Leds driver
 	status_leds_initialise(5); // Priority 5 for internal task
 	// Initialise the LoRaWAN driver without down-link buffer
-	lora_driver_initialise(1, NULL);
+	
+	MessageBufferHandle_t downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
+	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
+	
+	lora_driver_resetRn2483(1); // Activate reset line
+	vTaskDelay(2);
+	lora_driver_resetRn2483(0); // Release reset line
+	vTaskDelay(150); // Wait for tranceiver module to wake up after reset
+	lora_driver_flushBuffers(); // get rid of first version string from module after reset!
+	
 	// Create LoRaWAN task and start it up with priority 3
 	lora_handler_initialise(3);
 }

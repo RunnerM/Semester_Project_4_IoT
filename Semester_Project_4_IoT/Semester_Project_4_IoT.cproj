@@ -154,6 +154,9 @@
     <Folder Include="FreeRTOS\src\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="mhz19.c">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="drivers\.git">
       <SubType>compile</SubType>
     </None>
@@ -205,6 +208,12 @@
     <None Include="FreeRTOS\src\LICENSE.md">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="hih8120_reader.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hih_reader.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="LoRaWANHandler.c">
       <SubType>compile</SubType>
     </Compile>
