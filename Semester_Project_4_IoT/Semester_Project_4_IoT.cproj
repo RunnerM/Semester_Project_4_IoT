@@ -154,7 +154,28 @@
     <Folder Include="FreeRTOS\src\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="mhz19.c">
+    <Compile Include="luxSensor_reader.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="luxSensor_reader.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="mhz19_reader.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="mhz19_reader.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="rcServo_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="rcServo_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="statusLED_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="statusLED_handler.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="drivers\.git">
@@ -211,7 +232,7 @@
     <Compile Include="hih8120_reader.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="hih_reader.c">
+    <Compile Include="hih8120_reader.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="LoRaWANHandler.c">

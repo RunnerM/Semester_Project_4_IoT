@@ -9,13 +9,9 @@
 #ifndef HIH8120_READER_H_
 #define HIH8120_READER_H_
 
-struct hih_data_container 
-{
-	uint16_t humidity;
-	uint16_t temperature;
-};
+uint16_t readValueTemp();
+uint16_t readValueHum();
 
-hih_data_container refresh_data(); 
 
 #endif /* HIH8120_READER_H_ */
 
