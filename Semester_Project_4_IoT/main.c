@@ -23,17 +23,23 @@
 
 //---Sensors------------------------
 
-#include <hih8120.h>
-#include <mh_z19.h>
+#include "hih8120_reader.h"
+#include "mhz19_reader.h"
+
+//---Actuators----------------------
+
+#include "rcServo_handler.h"
+#include "statusLED_handler.h"
 
 
  // Needed for LoRaWAN
 #include <lora_driver.h>
 #include <status_leds.h>
 
-// define two Tasks
-void read_HIH8120( void *pvParameters );
-void task2( void *pvParameters );
+// define Tasks
+void Sensors_reader( void *pvParameters );
+void Task_executor( void *pvParameters );
+
 
 // define semaphore handle
 SemaphoreHandle_t xIOSemaphore;// For serial connection.
@@ -63,32 +69,39 @@ void create_tasks_and_semaphores(void)
 	}
 
 	xTaskCreate(
-	read_HIH8120
-	,  "read_HIH8120"  // A name just for humans
+	Sensors_reader
+	,  "sensor_reader"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
 
-// 	xTaskCreate(
-// 	task2
-// 	,  "Task2"  // A name just for humans
-// 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-// 	,  NULL
-// 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-// 	,  NULL );
+ 	xTaskCreate(
+ 	Task_executor
+ 	,  "Task_executor"  // A name just for humans
+ 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+ 	,  NULL
+ 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+ 	,  NULL );
 }
 
 /*-----------------------------------------------------------*/
-void read_HIH8120( void *pvParameters )
+void Sensors_reader( void *pvParameters )
 {
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 6000/portTICK_PERIOD_MS; // 5 min
 
 	// Initialise the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
-
+	//take semaphore here for io;
+	
 	for(;;)
+	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		
+	}
+
+/*	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		//puts("Task1"); // stdio functions are not reentrant - Should normally be protected by MUTEX
@@ -140,19 +153,22 @@ void read_HIH8120( void *pvParameters )
 				}
 			}
 		
-	}
+	}*/
+
 }
 
 
 
 /*-----------------------------------------------------------*/
-void task2( void *pvParameters )
+void Task_executor( void *pvParameters )
 {
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
 
 	// Initialise the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
+	
+	//take semaphore for IO here;
 
 	for(;;)
 	{
@@ -184,7 +200,7 @@ void initialiseSystem()
 
 	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Status Leds driver
-	status_leds_initialise(5); // Priority 5 for internal task
+	//status_leds_initialise(5); // Priority 5 for internal task
 	// Initialise the LoRaWAN driver without down-link buffer
 	
 	MessageBufferHandle_t downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
