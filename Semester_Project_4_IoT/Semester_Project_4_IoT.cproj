@@ -154,10 +154,16 @@
     <Folder Include="FreeRTOS\src\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LoRaWANHandler.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="luxSensor_reader.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="luxSensor_reader.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="main.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="mhz19_reader.c">

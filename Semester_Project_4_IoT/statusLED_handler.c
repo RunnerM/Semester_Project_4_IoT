@@ -8,8 +8,10 @@
 #include "statusLED_handler.h"
 #include <status_leds.h>
 
-void setLED(int num, bool toOn){
-	if (toOn)
+
+
+void setLED(int num, int toOn){
+	if (toOn==1)
 	{
 		switch (num)
 		{
@@ -37,6 +39,7 @@ void setLED(int num, bool toOn){
 	}
 		
 }
-void initialize(){
+void initialize_status_leds(){
+	
 	status_leds_initialise(5);
 }

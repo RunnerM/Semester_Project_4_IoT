@@ -8,9 +8,14 @@
 #include <stdio.h>
 
 #include <ATMEGA_FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
 
 #include <lora_driver.h>
 #include <status_leds.h>
+
+#include "main.h"
+#include "LoRaWANHandler.h"
 
 // Parameters for OTAA join - You have got these in a mail from IHA
 #define LORA_appEUI "65FDAA6D0706AF4E"
@@ -18,14 +23,24 @@
 
 static char _out_buf[100];
 
-void lora_handler_task( void *pvParameters );
+void lora_uplink_task( void *pvParameters );
+void lora_downlink_task( void *pvParameters );
+void lora_init_task( void *pvParameters );
 
 static lora_driver_payload_t _uplink_payload;
+lora_driver_payload_t downlinkPayload;
+
+QueueHandle_t xQueueForReadings;
+MeasurementValues valuesFromQueue;
+MessageBufferHandle_t downLinkMessageBufferHandle;
+
+
+
 
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 {
 	xTaskCreate(
-	lora_handler_task
+	lora_init_task
 	,  "LRHand"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
@@ -88,6 +103,23 @@ static void _lora_setup(void)
 		// Connected to LoRaWAN :-)
 		// Make the green led steady
 		status_leds_ledOn(led_ST2); // OPTIONAL
+		// creating the up link and down link task when connected successfully.
+		xTaskCreate(
+		lora_uplink_task
+		,  "LRHand"  // A name just for humans
+		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+		,  NULL
+		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  NULL );
+		
+		xTaskCreate(
+		lora_downlink_task
+		,  "LRHand"  // A name just for humans
+		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+		,  NULL
+		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  NULL );
+		
 	}
 	else
 	{
@@ -106,8 +138,85 @@ static void _lora_setup(void)
 }
 
 /*-----------------------------------------------------------*/
-void lora_handler_task( void *pvParameters )
+void lora_uplink_task( void *pvParameters)
+{	
+	//get queue from parameter and send the last mesurements;
+	_uplink_payload.len = 6;
+	_uplink_payload.portNo = 2;
+	//local variable for received measurements
+	
+	
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes (300000 ms)
+	xLastWakeTime = xTaskGetTickCount();
+	
+	for(;;)
+	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
+			if (xQueueReceive(xQueueForReadings,&valuesFromQueue,pdMS_TO_TICKS(100)))
+			{
+				
+				_uplink_payload.bytes[0] = valuesFromQueue.Humidity >> 8;
+				_uplink_payload.bytes[1] = valuesFromQueue.Humidity & 0xFF;
+				_uplink_payload.bytes[2] = valuesFromQueue.Temperature >> 8;
+				_uplink_payload.bytes[3] = valuesFromQueue.Temperature & 0xFF;
+				
+				lora_driver_returnCode_t rc;
+				
+				if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK )
+				{
+					// The uplink message is sent and there is no downlink message received
+				}
+				else if (rc == LORA_MAC_RX)
+				{
+					// The uplink message is sent and a downlink message is received
+				}
+				break;
+				printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
+			}
+			//Giving back io semaphore.
+			xSemaphoreGive(xIOSemaphore);
+		}
+		
+		
+		status_leds_shortPuls(led_ST4);  // OPTIONAL
+		printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
+	}
+}
+
+/*-----------------------------------------------------------*/
+
+
+void lora_downlink_task( void *pvParameters)
 {
+	//get message buffer from parameter;
+
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes (300000 ms)
+	xLastWakeTime = xTaskGetTickCount();
+	
+	for(;;)
+	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), portMAX_DELAY);
+		printf("DOWN LINK: from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
+		if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
+		{
+			// decode the payload into our variales
+			uint16_t payload_begin;
+			uint16_t payload_end;
+			payload_begin = (downlinkPayload.bytes[0] << 8) + downlinkPayload.bytes[1];
+			payload_end = (downlinkPayload.bytes[2] << 8) + downlinkPayload.bytes[3];
+			
+			printf("payload received: %i , %i",payload_begin,payload_end);
+		}
+	}
+	
+	
+}
+
+void lora_init_task(void *pvParameters){
 	// Hardware reset of LoRaWAN transceiver
 	lora_driver_resetRn2483(1);
 	vTaskDelay(2);
@@ -118,31 +227,13 @@ void lora_handler_task( void *pvParameters )
 	lora_driver_flushBuffers(); // get rid of first version string from module after reset!
 
 	_lora_setup();
-
-	_uplink_payload.len = 6;
-	_uplink_payload.portNo = 2;
-
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes (300000 ms)
-	xLastWakeTime = xTaskGetTickCount();
+	xQueueForReadings = xQueueCreate(3,sizeof(struct MeasurementValues*));
 	
-	for(;;)
-	{
-		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+	downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
+	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
 
-		// Some dummy payload
-		uint16_t hum = 12345; // Dummy humidity
-		int16_t temp = 675; // Dummy temp
-		uint16_t co2_ppm = 1050; // Dummy CO2
-
-		_uplink_payload.bytes[0] = hum >> 8;
-		_uplink_payload.bytes[1] = hum & 0xFF;
-		_uplink_payload.bytes[2] = temp >> 8;
-		_uplink_payload.bytes[3] = temp & 0xFF;
-		_uplink_payload.bytes[4] = co2_ppm >> 8;
-		_uplink_payload.bytes[5] = co2_ppm & 0xFF;
-
-		status_leds_shortPuls(led_ST4);  // OPTIONAL
-		printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
-	}
+	
+	// deletes task after setup;
+	vTaskDelete(NULL);
+	
 }

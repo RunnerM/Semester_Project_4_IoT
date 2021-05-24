@@ -6,8 +6,13 @@
  */ 
 #include "luxSensor_reader.h"
 #include <tsl2591.h>
+#include <stdio.h>
 
-float _lux;
+#include <ATMEGA_FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+
+float *_lux;
 
 void tsl2591Callback(tsl2591_returnCode_t rc){
 	{
@@ -68,34 +73,39 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 	
 }
 
-int read_lux(void* pvParameters){
+float read_lux(void* pvParameters){
 	(void)pvParameters;
-	int lux;
+	float lux;
 	for (;;) {
-		if (TSL2591_OK == tsl2591_enable()) {
-			if (TSL2591_OK == tsl2591_fetchData()) {
-				if (TSL2591_DATA_READY == tsl2591_getLux(&_lux) {
-					lux = *_lux;
-					return lux;
-				}
-				if (TSL2591_OK == tsl2591_disable()) {
-					// were powering down
+		if ( TSL2591_OK == tsl2591_initialise(tsl2591Callback) )
+		{
+			// Driver initilised OK
+			// Always check what tsl2591_initialise() returns
+		}else{
+			if (TSL2591_OK == tsl2591_enable()) {
+				if (TSL2591_OK == tsl2591_fetchData()) {
+					if (TSL2591_DATA_READY == tsl2591_getLux(&_lux)) {
+						lux = *_lux;
+						return lux;
+					}
+					if (TSL2591_OK == tsl2591_disable()) {
+						// were powering down
+					}
+					else {
+						// here be errors
+					}
 				}
 				else {
 					// here be errors
 				}
 			}
-			else {
-				// here be errors
-			}
 		}
 	}
-}
-// for init
-if ( TSL2591_OK == tsl2591_initialise(tsl2591Callback) )
+		
+/*	if ( TSL2591_OK == tsl2591_initialise(tsl2591Callback) )
 {
 	// Driver initilised OK
 	// Always check what tsl2591_initialise() returns
+}*/
 }
 	
-}

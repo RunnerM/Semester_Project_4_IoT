@@ -25,6 +25,7 @@
 
 #include "hih8120_reader.h"
 #include "mhz19_reader.h"
+#include "luxSensor_reader.h"
 
 //---Actuators----------------------
 
@@ -35,10 +36,13 @@
  // Needed for LoRaWAN
 #include <lora_driver.h>
 #include <status_leds.h>
+#include "LoRaWANHandler.h"
 
 // define Tasks
 void Sensors_reader( void *pvParameters );
 void Task_executor( void *pvParameters );
+//void Lora_sender( void *pvParameters );
+//void Lora_reciever( void *pvParameters );
 
 
 // define semaphore handle
@@ -49,9 +53,19 @@ void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
 
 //---Global variables----------
 
-uint16_t humidity = 0.0;
-uint16_t temperature = 0.0;
-uint16_t CO2 = 0.0;
+//---struct for storing measured data----
+
+
+
+
+struct MeasurementValues
+{
+	uint16_t Temperature;
+	uint16_t Humidity;
+	uint16_t CO2ppm;
+	float Lux;
+};
+
 
 /*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
@@ -83,6 +97,7 @@ void create_tasks_and_semaphores(void)
  	,  NULL
  	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
  	,  NULL );
+	
 }
 
 /*-----------------------------------------------------------*/
@@ -90,14 +105,29 @@ void Sensors_reader( void *pvParameters )
 {
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 6000/portTICK_PERIOD_MS; // 5 min
+	//measurement container.
+	struct MeasurementValues newvalues;
 
-	// Initialise the xLastWakeTime variable with the current time.
+	// Initialize the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
-	//take semaphore here for io;
 	
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
+		{
+			//reading values -----
+			newvalues.Temperature= readValueTemp();
+			newvalues.Humidity = readValueHum();
+			newvalues.CO2ppm= read_CO2_ppm();
+			newvalues.Lux= read_lux();
+			//putting new values into value Queue.
+			xQueueSend(xQueueForReadings,&newvalues,portMAX_DELAY);
+			//Giving back io semaphore.
+			xSemaphoreGive(xIOSemaphore);
+		}else{
+			//timed out
+		}
 		
 	}
 
@@ -157,8 +187,6 @@ void Sensors_reader( void *pvParameters )
 
 }
 
-
-
 /*-----------------------------------------------------------*/
 void Task_executor( void *pvParameters )
 {
@@ -178,33 +206,63 @@ void Task_executor( void *pvParameters )
 }
 
 /*-----------------------------------------------------------*/
+
+void Lora_sender( void *pvParameters )
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
+
+	// Initialise the xLastWakeTime variable with the current time.
+	xLastWakeTime = xTaskGetTickCount();
+	
+	//take semaphore for IO here;
+
+	for(;;)
+	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		
+	}
+}
+
+/*-----------------------------------------------------------*/
+
+void Lora_reciever( void *pvParameters )
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
+
+	// Initialise the xLastWakeTime variable with the current time.
+	xLastWakeTime = xTaskGetTickCount();
+	
+	//take semaphore for IO here;
+
+	for(;;)
+	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
+		
+	}
+}
+
+/*-----------------------------------------------------------*/
 void initialiseSystem()
 {
+	
+	
 	// Set output ports for leds used in the example
 	DDRA |= _BV(DDA0) | _BV(DDA7);
 
 	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
 	stdio_initialise(ser_USART0);
 	
-	//---HIH8120 init--------------------------
-	if (HIH8120_OK == hih8120_initialise()){
-		
-	}else
-	{
-		
-	}
-	
-	
 	// Let's create some tasks
 	create_tasks_and_semaphores();
 
 	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Status Leds driver
-	//status_leds_initialise(5); // Priority 5 for internal task
+	initialize_status_leds(); // 
 	// Initialise the LoRaWAN driver without down-link buffer
 	
-	MessageBufferHandle_t downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
-	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
+	
 	
 	lora_driver_resetRn2483(1); // Activate reset line
 	vTaskDelay(2);
