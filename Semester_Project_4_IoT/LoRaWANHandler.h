@@ -9,7 +9,7 @@
 #ifndef LORAWANHANDLER_H_
 #define LORAWANHANDLER_H_
 
-typedef struct
+/*typedef struct
 {
 	uint16_t Temperature;
 	uint16_t Humidity;

@@ -4,7 +4,7 @@
 * Created: 12/04/2019 10:09:05
 *  Author: IHA
 */
-#include <stddef.h>
+/*#include <stddef.h>
 #include <stdio.h>
 
 #include <ATMEGA_FreeRTOS.h>
@@ -46,6 +46,22 @@ void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 	,  NULL
 	,  lora_handler_task_priority  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
+	
+	/*xTaskCreate(
+		lora_uplink_task
+		,  "LRHand"  // A name just for humans
+		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+		,  NULL
+		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  NULL );
+		
+		xTaskCreate(
+		lora_downlink_task
+		,  "LRHand"  // A name just for humans
+		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+		,  NULL
+		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  NULL );
 }
 
 static void _lora_setup(void)
@@ -109,7 +125,7 @@ static void _lora_setup(void)
 		,  "LRHand"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
-		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 		,  NULL );
 		
 		xTaskCreate(
@@ -117,9 +133,8 @@ static void _lora_setup(void)
 		,  "LRHand"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
-		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 		,  NULL );
-		
 	}
 	else
 	{
@@ -137,7 +152,7 @@ static void _lora_setup(void)
 	}
 }
 
-/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------
 void lora_uplink_task( void *pvParameters)
 {	
 	//get queue from parameter and send the last mesurements;
@@ -185,7 +200,7 @@ void lora_uplink_task( void *pvParameters)
 	}
 }
 
-/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------
 
 
 void lora_downlink_task( void *pvParameters)
@@ -193,9 +208,10 @@ void lora_downlink_task( void *pvParameters)
 	//get message buffer from parameter;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(3000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	
+	printf("reading down link");
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
@@ -217,23 +233,32 @@ void lora_downlink_task( void *pvParameters)
 }
 
 void lora_init_task(void *pvParameters){
-	// Hardware reset of LoRaWAN transceiver
-	lora_driver_resetRn2483(1);
-	vTaskDelay(2);
-	lora_driver_resetRn2483(0);
-	// Give it a chance to wakeup
-	vTaskDelay(150);
-
-	lora_driver_flushBuffers(); // get rid of first version string from module after reset!
-
-	_lora_setup();
-	xQueueForReadings = xQueueCreate(3,sizeof(struct MeasurementValues*));
 	
-	downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
-	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
+	for(;;){
+		
+		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
+		{
+			printf("xIOsemaphore taken by lora init/n");
+			// Hardware reset of LoRaWAN transceiver
+			lora_driver_resetRn2483(1);
+			vTaskDelay(2);
+			lora_driver_resetRn2483(0);
+			// Give it a chance to wakeup
+			vTaskDelay(150);
+
+			lora_driver_flushBuffers(); // get rid of first version string from module after reset!
+
+			_lora_setup();
+	
+			xQueueForReadings = xQueueCreate(3,sizeof(struct MeasurementValues*));
 
 	
-	// deletes task after setup;
-	vTaskDelete(NULL);
+			// deletes task after setup;
+			vTaskDelete(NULL);
+			printf("xIOsemaphore given by lora init/n");
+			xSemaphoreGive(xIOSemaphore);
+		}
+	}
 	
-}
+	
+}*/

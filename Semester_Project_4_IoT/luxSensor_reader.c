@@ -77,11 +77,6 @@ float read_lux(void* pvParameters){
 	(void)pvParameters;
 	float lux;
 	for (;;) {
-		if ( TSL2591_OK == tsl2591_initialise(tsl2591Callback) )
-		{
-			// Driver initilised OK
-			// Always check what tsl2591_initialise() returns
-		}else{
 			if (TSL2591_OK == tsl2591_enable()) {
 				if (TSL2591_OK == tsl2591_fetchData()) {
 					if (TSL2591_DATA_READY == tsl2591_getLux(&_lux)) {
@@ -100,12 +95,4 @@ float read_lux(void* pvParameters){
 				}
 			}
 		}
-	}
-		
-/*	if ( TSL2591_OK == tsl2591_initialise(tsl2591Callback) )
-{
-	// Driver initilised OK
-	// Always check what tsl2591_initialise() returns
-}*/
-}
-	
+	}	
