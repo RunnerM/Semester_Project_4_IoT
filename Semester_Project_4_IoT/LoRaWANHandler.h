@@ -18,6 +18,8 @@ typedef struct
 }MeasurementValues ;
 
 extern QueueHandle_t xQueueForReadings;
+void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
+static void _lora_setup(void);
 
 
 

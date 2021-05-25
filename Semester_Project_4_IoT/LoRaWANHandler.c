@@ -14,7 +14,7 @@
 #include <lora_driver.h>
 #include <status_leds.h>
 
-#include "main.h"
+//#include "main.h"
 #include "LoRaWANHandler.h"
 
 // Parameters for OTAA join - You have got these in a mail from IHA
@@ -153,7 +153,7 @@ void lora_uplink_task( void *pvParameters)
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
+		//if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
 			if (xQueueReceive(xQueueForReadings,&valuesFromQueue,pdMS_TO_TICKS(100)))
 			{
 				
@@ -176,8 +176,8 @@ void lora_uplink_task( void *pvParameters)
 				printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
 			}
 			//Giving back io semaphore.
-			xSemaphoreGive(xIOSemaphore);
-		}
+			//xSemaphoreGive(xIOSemaphore);
+		//}
 		
 		
 		status_leds_shortPuls(led_ST4);  // OPTIONAL
