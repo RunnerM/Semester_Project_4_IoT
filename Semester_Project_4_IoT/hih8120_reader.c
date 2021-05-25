@@ -9,8 +9,12 @@
 #include <hih8120.h>
 #include <stdio.h>
 
+#include <ATMEGA_FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+const TickType_t xDelayWakeUp = 60;
 
-readValueHum(){
+uint16_t readValueHum(){
 	uint16_t result;
 	if (HIH8120_OK!=hih8120_wakeup())
 	{
@@ -34,8 +38,9 @@ readValueHum(){
 	return result;
 }
 
-readValueTemp(){
+uint16_t readValueTemp(){
 	uint16_t result;
+
 	if (HIH8120_OK!=hih8120_wakeup())
 	{
 		puts("error with sensor hih8120 wakeup\n");
