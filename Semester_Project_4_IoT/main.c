@@ -59,8 +59,8 @@ void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
 
 typedef struct
 {
-	uint16_t Temperature;
-	uint16_t Humidity;
+	float Temperature;
+	float Humidity;
 	uint16_t CO2ppm;
 	float Lux;
 }MeasurementValues ;
@@ -75,13 +75,6 @@ MeasurementValues valuesFromQueue;
 MessageBufferHandle_t downLinkMessageBufferHandle;
 
 //---struct for storing measured data----
-/*struct MeasurementValues
-{
-	uint16_t Temperature;
-	uint16_t Humidity;
-	uint16_t CO2ppm;
-	float Lux;
-};*/
 
 
 /*-----------------------------------------------------------*/
@@ -112,7 +105,7 @@ void create_tasks_and_semaphores(void)
 		,  "LR_up_link"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
-		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 		,  NULL );
 
  	/*xTaskCreate(
@@ -122,6 +115,14 @@ void create_tasks_and_semaphores(void)
  	,  NULL
  	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
  	,  NULL );*/
+	 
+	 /*xTaskCreate(
+		lora_downlink_task
+		,  "LR_down_link"  // A name just for humans
+		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+		,  NULL
+		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  NULL );*/
 	
 }
 
@@ -129,10 +130,11 @@ void create_tasks_and_semaphores(void)
 void Sensors_reader( void *pvParameters )
 {
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(120000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(30000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	//measurement container.
-	MeasurementValues newvalues;
+	 MeasurementValues newvalues;
+	 MeasurementValues *poniterToValues;
 	hih8120results hihresults;
 
 	for(;;)
@@ -145,15 +147,23 @@ void Sensors_reader( void *pvParameters )
 			hihresults = readValueAll();
 			//printf("hih reading have been performed. Hum: %i , temp: %i  ", hihresults.hum,hihresults.temp);
 			newvalues.Temperature= hihresults.temp;
-			printf("temp done\n");
+			printf("temp done: %7.4f \n", hihresults.temp);
 			newvalues.Humidity = hihresults.hum;
-			printf("hum done\n");
-			newvalues.CO2ppm= read_CO2_ppm();
-			printf("co2 done\n");
+			printf("hum done : %7.4f \n", hihresults.hum);
+			uint16_t co2ppm= read_CO2_ppm();
+			printf("co2ppm : %d ",co2ppm);
+			newvalues.CO2ppm= co2ppm;
+			printf("co2 done %d \n", newvalues.CO2ppm);
 			//newvalues.Lux= read_lux();
 			//printf("lux done\n");
 			//putting new values into value Queue.
-			xQueueSend(xQueueForReadings,(void *)&newvalues,portMAX_DELAY);
+			poniterToValues= &newvalues;
+			
+			if (pdTRUE==xQueueSend(xQueueForReadings,(void *) &poniterToValues,portMAX_DELAY)){
+				puts("message sent.");
+			}else{
+				puts("message was not sent");
+			}
 			//Giving back io semaphore.
 			printf("xIOsemaphore given sensor reader\n");
 			xSemaphoreGive( ( xIOSemaphore ) );
@@ -210,7 +220,7 @@ void initialiseSystem()
 	if ( HIH8120_OK == hih8120_initialise() )
 	{
 	}
-	if ( TSL2591_OK == tsl2591_initialise(&tsl2591Callback) )// it goes bananas here.
+	if ( TSL2591_OK == tsl2591_initialise(&tsl2591Callback) )
 	{
 	}
 	rc_servo_initialise();	
@@ -294,13 +304,13 @@ static void _lora_setup(void)
 		// Make the green led steady
 		status_leds_ledOn(led_ST2); // OPTIONAL
 		// creating the up link and down link task when connected successfully.
-		xTaskCreate(
+		/*xTaskCreate(
 		lora_uplink_task
 		,  "LR_up_link"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
 		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-		,  NULL );
+		,  NULL );*/
 		
 		/*xTaskCreate(
 		lora_downlink_task
@@ -344,26 +354,27 @@ void lora_uplink_task( void *pvParameters)
 	
 	
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(60000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(15000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		if (xQueueReceive(xQueueForReadings,&valuesFromQueue,pdMS_TO_TICKS(100)))
+		if (pdTRUE == xQueueForReadings,&valuesFromQueue,pdMS_TO_TICKS(100))
 		{
-			puts("1");
 			if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
+				puts("semaphore taken by uplink");
 				//printf("semaphore taken by up link task\n");
-				printf("trying to read from queue.\n");
+				//printf("trying to read from queue.\n");
 			/*_uplink_payload.bytes[0] = valuesFromQueue.Humidity >> 8;
 			_uplink_payload.bytes[1] = valuesFromQueue.Humidity & 0xFF;
 			_uplink_payload.bytes[2] = valuesFromQueue.Temperature >> 8;
 			_uplink_payload.bytes[3] = valuesFromQueue.Temperature & 0xFF;*/
 			
-			printf("Temp: %i \n", valuesFromQueue.Temperature);
-			printf("Hum: %i \n", valuesFromQueue.Humidity);
-			puts("2");
+			printf("Temp: %f \n", valuesFromQueue.Temperature);
+			printf("Hum: %f \n", valuesFromQueue.Humidity);
+			printf("CO2ppm: %d \n", valuesFromQueue.CO2ppm);
+			puts("3");
 			/*lora_driver_returnCode_t rc;
 			
 			if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK )
@@ -382,12 +393,13 @@ void lora_uplink_task( void *pvParameters)
 			xSemaphoreGive( ( xIOSemaphore ) );
 		}
 		else{
-			//printf("nothing received from queue\n");
+			printf("nothing received from queue\n");
 		}
 		
 		}
 	}
-}
+	}
+
 
 void lora_downlink_task( void *pvParameters)
 {
@@ -400,9 +412,9 @@ void lora_downlink_task( void *pvParameters)
 	printf("reading down link");
 	for(;;)
 	{
+		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
 			printf("semaphore taken by up downlink task\n");
-		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), portMAX_DELAY);
 		printf("DOWN LINK: from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
 		if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
