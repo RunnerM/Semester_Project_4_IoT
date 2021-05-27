@@ -75,23 +75,40 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 
 float read_lux(void* pvParameters){
 	(void)pvParameters;
+	tsl2591_returnCode_t rc;
+	puts("1");
 	float lux;
+	puts("2");
 	for (;;) {
+		//puts("loop");
 			if (TSL2591_OK == tsl2591_enable()) {
+				//puts("3");
+				for(;;){
+					
+				}
 				if (TSL2591_OK == tsl2591_fetchData()) {
+					puts("4");
 					if (TSL2591_DATA_READY == tsl2591_getLux(&_lux)) {
 						lux = *_lux;
+						puts("5");
 						return lux;
+						
 					}
 					if (TSL2591_OK == tsl2591_disable()) {
 						// were powering down
+						puts("6");
 					}
 					else {
 						// here be errors
+						puts("7");
 					}
 				}
 				else {
 					// here be errors
+					//puts("8");
+					rc = tsl2591_fetchData();
+					printf("%s", rc);
+					
 				}
 			}
 		}

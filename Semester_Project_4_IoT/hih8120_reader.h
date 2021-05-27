@@ -11,8 +11,14 @@
 #ifndef HIH8120_READER_H_
 #define HIH8120_READER_H_
 
-uint16_t readValueTemp();
-uint16_t readValueHum();
+typedef struct{
+	float temp;
+	float hum;
+}hih8120results;
+
+hih8120results readValueAll();
+
+
 
 
 #endif /* HIH8120_READER_H_ */

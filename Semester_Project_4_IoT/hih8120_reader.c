@@ -12,54 +12,34 @@
 #include <ATMEGA_FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
-const TickType_t xDelayWakeUp = 60;
+TickType_t xDelayWakeUp;
 
-uint16_t readValueHum(){
-	uint16_t result;
+hih8120results readValueAll(){
+	hih8120results result;
+	xDelayWakeUp = pdMS_TO_TICKS(55);
+	
 	if (HIH8120_OK!=hih8120_wakeup())
 	{
 		puts("error with sensor hih8120 wakeup\n");
 		}else{
 		vTaskDelay(xDelayWakeUp);
+		
 	}
 	if (HIH8120_OK!=hih8120_measure())
 	{
 		puts("error with sensor hih8120 maesure\n");
 	}else
 	{
+		vTaskDelay(pdMS_TO_TICKS(10));
 		for (;;)
 		{
 			if (hih8120_isReady())
 			{
-				result= hih8120_getHumidity();
+				result.hum= hih8120_getHumidity();
+				result.temp= hih8120_getTemperature();
+				return result;
 			}
 		}
 	}
-	return result;
+	
 }
-
-uint16_t readValueTemp(){
-	uint16_t result;
-
-	if (HIH8120_OK!=hih8120_wakeup())
-	{
-		puts("error with sensor hih8120 wakeup\n");
-		}else{
-		vTaskDelay(xDelayWakeUp);
-	}
-	if (HIH8120_OK!=hih8120_measure())
-	{
-		puts("error with sensor hih8120 maesure\n");
-	}else
-	{
-		for (;;)
-		{
-			if (hih8120_isReady())
-			{
-				result= hih8120_getTemperature();
-			}
-		}
-	}
-	return result;
-}
-
