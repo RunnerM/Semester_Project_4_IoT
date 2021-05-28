@@ -13,7 +13,8 @@
 #define LUXSENSOR_READER_H_
 
 void tsl2591Callback(tsl2591_returnCode_t rc);
-float read_lux();
+void read_lux();
+float get_lux_value();
 
 
 #endif /* LUXSENSOR_READER_H_ */

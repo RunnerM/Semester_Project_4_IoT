@@ -10,6 +10,7 @@
 #include <task.h>
 #include <queue.h>
 #include <semphr.h>
+#include <event_groups.h>
 
 
 //---I/O----------------------------
@@ -42,13 +43,21 @@
 #define LORA_appEUI "65FDAA6D0706AF4E"
 #define LORA_appKEY "43EE2CF43D3D5797D3F7564263534C82"
 
+// EventBits-------
+#define BIT_0	( 1 << 0 )
+#define BIT_1   ( 1 << 1 )
+#define BIT_2	( 1 << 2 )
+
 static char _out_buf[100];
 // define Tasks
-void Sensors_reader( void *pvParameters );
-void Task_executor( void *pvParameters );
+void HIH8120_reader( void *pvParameters );
+void MHZ19_reader( void *pvParameters );
+void TSL2591_reader( void *pvParameters );
 void lora_uplink_task( void *pvParameters );
 void lora_downlink_task( void *pvParameters );
 void lora_init_task( void *pvParameters );
+
+
 
 
 // define semaphore handle
@@ -56,14 +65,17 @@ SemaphoreHandle_t xIOSemaphore;// For serial connection.
 
 // Prototype for LoRaWAN handler
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
+void aFunctionToWaitBits( EventGroupHandle_t xEventGroup );
+void aFunctionToClearBits( EventGroupHandle_t xEventGroup );
+void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No);
+EventGroupHandle_t getEventGroup();
 
-typedef struct
-{
-	float Temperature;
-	float Humidity;
-	uint16_t CO2ppm;
-	float Lux;
-}MeasurementValues ;
+
+//globals--------
+uint16_t Temperature;
+uint16_t Humidity;
+uint16_t CO2ppm;
+uint16_t Lux;
 
 //---Global variables----------
 MessageBufferHandle_t downLinkMessageBufferHandle;
@@ -71,11 +83,12 @@ static lora_driver_payload_t _uplink_payload;
 lora_driver_payload_t downlinkPayload;
 
 QueueHandle_t xQueueForReadings;
-MeasurementValues valuesFromQueue;
 MessageBufferHandle_t downLinkMessageBufferHandle;
+EventGroupHandle_t xCreatedEventGroup;
 
-//---struct for storing measured data----
-
+EventGroupHandle_t getEventGroup(){
+	return xCreatedEventGroup;
+}
 
 /*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
@@ -92,78 +105,62 @@ void create_tasks_and_semaphores(void)
 		}
 	}
 
+	/*xTaskCreate(
+	TSL2591_reader
+	,  "sensor_reader_TSL"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );*/
 	xTaskCreate(
-	Sensors_reader
-	,  "sensor_reader"  // A name just for humans
+	HIH8120_reader
+	,  "sensor_reader_HIH"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
+	xTaskCreate(
+	MHZ19_reader
+	,  "sensor_reader_MZ"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
+	
 	
 	xTaskCreate(
 		lora_uplink_task
 		,  "LR_up_link"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
-		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  4  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 		,  NULL );
-
- 	/*xTaskCreate(
- 	Task_executor
- 	,  "Task_executor"  // A name just for humans
- 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
- 	,  NULL
- 	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
- 	,  NULL );*/
 	 
 	 /*xTaskCreate(
 		lora_downlink_task
 		,  "LR_down_link"  // A name just for humans
 		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
 		,  NULL
-		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+		,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 		,  NULL );*/
 	
 }
-
-/*-----------------------------------------------------------*/
-void Sensors_reader( void *pvParameters )
+void HIH8120_reader( void *pvParameters )
 {
+	hih8120results result;
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(30000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(60000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
-	//measurement container.
-	 MeasurementValues newvalues;
-	 MeasurementValues *poniterToValues;
-	hih8120results hihresults;
-
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 		{
-			printf("xIOsemaphore taken by sensor reader\n");
-			//reading values -----
-			hihresults = readValueAll();
-			//printf("hih reading have been performed. Hum: %i , temp: %i  ", hihresults.hum,hihresults.temp);
-			newvalues.Temperature= hihresults.temp;
-			printf("temp done: %7.4f \n", hihresults.temp);
-			newvalues.Humidity = hihresults.hum;
-			printf("hum done : %7.4f \n", hihresults.hum);
-			uint16_t co2ppm= read_CO2_ppm();
-			printf("co2ppm : %d ",co2ppm);
-			newvalues.CO2ppm= co2ppm;
-			printf("co2 done %d \n", newvalues.CO2ppm);
-			//newvalues.Lux= read_lux();
-			//printf("lux done\n");
-			//putting new values into value Queue.
-			poniterToValues= &newvalues;
-			
-			if (pdTRUE==xQueueSend(xQueueForReadings,(void *) &poniterToValues,portMAX_DELAY)){
-				puts("message sent.");
-			}else{
-				puts("message was not sent");
-			}
+			puts("HIH");
+			result=readValueAll();
+			Temperature= result.temp;
+			Humidity= result.hum;
+			aFunctionToSetBits(xCreatedEventGroup,1);
 			//Giving back io semaphore.
 			printf("xIOsemaphore given sensor reader\n");
 			xSemaphoreGive( ( xIOSemaphore ) );
@@ -173,37 +170,221 @@ void Sensors_reader( void *pvParameters )
 		
 	}
 	}
-
-/*-----------------------------------------------------------*/
-void Task_executor( void *pvParameters )
-{
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
-
-	// Initialise the xLastWakeTime variable with the current time.
-	xLastWakeTime = xTaskGetTickCount();
-	
-	//take semaphore for IO here;
-
-	for(;;)
+void MHZ19_reader( void *pvParameters )
 	{
-		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
+		TickType_t xLastWakeTime;
+		const TickType_t xFrequency = pdMS_TO_TICKS(60000UL); // Upload message every 5 minutes (300000 ms)
+		xLastWakeTime = xTaskGetTickCount();
+		for(;;)
 		{
-			printf("xIOsemaphore taken/n");
+			xTaskDelayUntil( &xLastWakeTime, xFrequency );
+			if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
+			{
+				puts("MHZ");
+				CO2ppm= read_CO2_ppm();
+				aFunctionToSetBits(xCreatedEventGroup,0);
+				//Giving back io semaphore.
+				printf("xIOsemaphore given sensor reader\n");
+				xSemaphoreGive( ( xIOSemaphore ) );
+				}else{
+				//timed out
+			}
 			
-			
-			printf("xIOsemaphore given/n");
-			xSemaphoreGive( ( xIOSemaphore ) );
+		}
 	}
+	
+void TSL2591_reader( void *pvParameters )
+	{
+		TickType_t xLastWakeTime;
+		const TickType_t xFrequency = pdMS_TO_TICKS(60000UL); // Upload message every 5 minutes (300000 ms)
+		xLastWakeTime = xTaskGetTickCount();
+		for(;;)
+		{
+			xTaskDelayUntil( &xLastWakeTime, xFrequency );
+			if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
+			{
+				puts("TSL");
+				if (BIT_2==0)
+				{
+					read_lux();
+					//the callback sets the bit.
+				}
+				//Giving back io semaphore.
+				printf("xIOsemaphore given sensor reader\n");
+				xSemaphoreGive( ( xIOSemaphore ) );
+				}else{
+				//timed out
+			}
+			
+		}
+	}
+
+void sendLoraPayload(){
+	_uplink_payload.len = 6;
+	_uplink_payload.portNo = 2;
+	
+	_uplink_payload.bytes[0] = Humidity >> 8;
+	_uplink_payload.bytes[1] = Humidity & 0xFF;
+	_uplink_payload.bytes[2] = Temperature >> 8;
+	_uplink_payload.bytes[3] = Temperature & 0xFF;
+	printf("%i",CO2ppm >> 8);
+	printf("%i",CO2ppm & 0xFF);
+	_uplink_payload.bytes[4] = CO2ppm >> 8;
+	_uplink_payload.bytes[5] = CO2ppm & 0xFF;
+	
+	lora_driver_returnCode_t rc;
+	
+	if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK )
+	{
+		printf("Lora message has been sent!");
+	}
+	else if (rc == LORA_MAC_RX)
+	{
+		printf("Lora message has been sent down link message received!");
+	}
+	printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
+}
+
+void aFunctionToWaitBits( EventGroupHandle_t xEventGroup )
+{
+EventBits_t uxBits;
+const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
+
+  /* Wait a maximum of 100ms for either bit 0 or bit 4 to be set within
+  the event group.  Clear the bits before exiting. */
+  uxBits = xEventGroupWaitBits(
+            xEventGroup,   /* The event group being tested. */
+            BIT_0 | BIT_1, /*| BIT_2 , /* The bits within the event group to wait for. */
+            pdFALSE,        /* BIT_0 & BIT_4 should not be cleared before returning. */
+            pdTRUE,       /* Wait for both bits, either bit will do. */
+            xTicksToWait );/* Wait a maximum of 100ms for either bit to be set. */
+
+  if( ( uxBits & ( BIT_0 | BIT_1 /*| BIT_2*/) ) == ( BIT_0 | BIT_1 /*| BIT_2*/) )
+  {
+      /* xEventGroupWaitBits() returned because both bits were set. */
+	  printf("setting the bits, they are set \n");
+	  // do application logic here.
+	  printf("Temp: %i \n", Temperature );
+	  printf("Hum: %i \n", Humidity );
+	  printf("CO2ppm: %i \n", CO2ppm);
+	  Lux= get_lux_value();
+	  printf("%i \n", Lux);
+
+	  //lora up link send
+	  sendLoraPayload();
+	  aFunctionToClearBits( xEventGroup );
+  }
+  else if( ( uxBits & BIT_0 ) != 0 )
+  {
+      /* xEventGroupWaitBits() returned because just BIT_0 was set. */
+	  puts("0");
+  }
+  if( ( uxBits & BIT_1 ) != 0 )
+  {
+      /* xEventGroupWaitBits() returned because just BIT_1 was set. */
+	   puts("1");
+  }
+  /*if( ( uxBits & BIT_2 ) != 0 )
+  {
+	  // xEventGroupWaitBits() returned because just BIT_2 was set. 
+	   puts("2");
+  }*/
+  else
+  {
+      /* xEventGroupWaitBits() returned because xTicksToWait ticks passed
+      without either BIT_0 or BIT_4 becoming set. */
+	   puts("n");
+	  
+  }
+}
+
+void aFunctionToClearBits( EventGroupHandle_t xEventGroup )
+{
+EventBits_t uxBits;
+
+  /* Clear bit 0 and bit 4 in xEventGroup. */
+  uxBits = xEventGroupClearBits(
+                                xEventGroup,  /* The event group being updated. */
+                                BIT_0 | BIT_1 | BIT_2 );/* The bits being cleared. */
+
+  if( ( uxBits & ( BIT_0 | BIT_1 | BIT_2 ) ) == ( BIT_0 | BIT_1| BIT_2 ) )
+  {
+      /* Both bit 0 and bit 4 were set before xEventGroupClearBits()
+      was called.  Both will now be clear (not set). */
+  }
+  else if( ( uxBits & BIT_0 ) != 0 )
+  {
+      /* Bit 0 was set before xEventGroupClearBits() was called.  It will
+      now be clear. */
+  }
+  else if( ( uxBits & BIT_1 ) != 0 )
+  {
+      /* Bit 1 was set before xEventGroupClearBits() was called.  It will
+      now be clear. */
+  }
+  else if( ( uxBits & BIT_2 ) != 0 )
+  {
+      /* Bit 2 was set before xEventGroupClearBits() was called.  It will
+      now be clear. */
+  }
+  else
+  {
+      /* Neither bit 0 nor bit 4 were set in the first place. */
+  }
+}
+
+void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
+{
+	EventBits_t uxBits;
+	switch(bit_No){
+		case 0:
+			/* Set bit 0 and bit 4 in xEventGroup. */
+			uxBits = xEventGroupSetBits(
+			xEventGroup,    /* The event group being updated. */
+			BIT_0 );/* The bits being set. */
+			break;
+		case 1:
+			/* Set bit 0 and bit 4 in xEventGroup. */
+			uxBits = xEventGroupSetBits(
+			xEventGroup,    /* The event group being updated. */
+			BIT_1 );/* The bits being set. */
+			break;
+		case 2:
+			/* Set bit 0 and bit 4 in xEventGroup. */
+			uxBits = xEventGroupSetBits(
+			xEventGroup,    /* The event group being updated. */
+			BIT_2 );/* The bits being set. */
+			break;
+	}
+	
+
+	if( ( uxBits & (  BIT_0 ) ) == (  BIT_0 ) )
+	{
+		/* bit 4 remained set when the function returned. */
+	}
+	if( ( uxBits & (  BIT_1 ) ) == (  BIT_1 ) )
+	{
+		/* bit 4 remained set when the function returned. */
+	}
+	if( ( uxBits & (  BIT_2 ) ) == (  BIT_2 ) )
+	{
+		/* bit 4 remained set when the function returned. */
 	}
 }
 
-/*-----------------------------------------------------------*/
 void initialiseSystem()
 {
-	//creating queue for communicating between reader and LoRa sender task.
-	xQueueForReadings = xQueueCreate(10,sizeof(struct MeasurementValues*));
+	
+	xCreatedEventGroup = xEventGroupCreate();
+	if( xCreatedEventGroup == NULL )
+	{
+		// The event group was not created because there was insufficient
+		// FreeRTOS heap available.
+	}
+	else
+	{
+		
+	}
 	// Set output ports for leds used in the example
 	DDRA |= _BV(DDA0) | _BV(DDA7);
 
@@ -220,9 +401,15 @@ void initialiseSystem()
 	if ( HIH8120_OK == hih8120_initialise() )
 	{
 	}
+	
 	if ( TSL2591_OK == tsl2591_initialise(&tsl2591Callback) )
 	{
+		if (TSL2591_OK == tsl2591_enable()) {
+			puts("Light sensor powered.");
+		}
 	}
+	
+	
 	rc_servo_initialise();	
 	
 	
@@ -232,7 +419,7 @@ void initialiseSystem()
 	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
 	
 	// Create LoRaWAN task and start it up with priority 3
-	//lora_handler_initialise(3);
+	lora_handler_initialise(3);
 }
 	
 /*--------------------------LORA---------------------------------*/
@@ -347,77 +534,44 @@ static void _lora_setup(void)
 
 void lora_uplink_task( void *pvParameters)
 {
-	//get queue from parameter and send the last mesurements;
-	_uplink_payload.len = 6;
-	_uplink_payload.portNo = 2;
-	//local variable for received measurements
-	
-	
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(15000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(30000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	
 	for(;;)
 	{
+		puts("lora upload.");
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		if (pdTRUE == xQueueForReadings,&valuesFromQueue,pdMS_TO_TICKS(100))
-		{
-			if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
-				puts("semaphore taken by uplink");
-				//printf("semaphore taken by up link task\n");
-				//printf("trying to read from queue.\n");
-			/*_uplink_payload.bytes[0] = valuesFromQueue.Humidity >> 8;
-			_uplink_payload.bytes[1] = valuesFromQueue.Humidity & 0xFF;
-			_uplink_payload.bytes[2] = valuesFromQueue.Temperature >> 8;
-			_uplink_payload.bytes[3] = valuesFromQueue.Temperature & 0xFF;*/
-			
-			printf("Temp: %f \n", valuesFromQueue.Temperature);
-			printf("Hum: %f \n", valuesFromQueue.Humidity);
-			printf("CO2ppm: %d \n", valuesFromQueue.CO2ppm);
-			puts("3");
-			/*lora_driver_returnCode_t rc;
-			
-			if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK )
-			{
-				printf("Lora message has been sent!");
-			}
-			else if (rc == LORA_MAC_RX)
-			{
-				printf("Lora message has been sent down link message recieved!");
-			}
-			break;
-			printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));*/
-			
-			//Giving back io semaphore.
-			printf("semaphore given by up link task\n");
-			xSemaphoreGive( ( xIOSemaphore ) );
-		}
-		else{
-			printf("nothing received from queue\n");
-		}
-		
-		}
+		aFunctionToWaitBits(xCreatedEventGroup);
 	}
-	}
-
+}
 
 void lora_downlink_task( void *pvParameters)
 {
 	//get message buffer from parameter;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(3000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(30000UL); // Upload message every 5 minutes (300000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	
-	printf("reading down link");
+	printf("reading down link\n");
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
-			printf("semaphore taken by up downlink task\n");
-		xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), portMAX_DELAY);
+		/*if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
+			printf("semaphore taken by up downlink task\n");*/
+		printf("attempting reading of down link message\n");
+		size_t xReceivedBytes;
+		xReceivedBytes=xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), portMAX_DELAY);
+		
+		if (xReceivedBytes>0)
+		{
+			printf("there was a down link message.\n");
+		}else{
+			printf("there was no message.\n");
+		}
 		printf("DOWN LINK: from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
-		if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
+		/*if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
 		{
 			// decode the payload into our variales
 			uint16_t payload_begin;
@@ -426,10 +580,12 @@ void lora_downlink_task( void *pvParameters)
 			payload_end = (downlinkPayload.bytes[2] << 8) + downlinkPayload.bytes[3];
 			
 			printf("payload received: %i , %i",payload_begin,payload_end);
-		}
-		printf("semaphore given by down link task\n");
+		}else{
+			puts("wrong format of down link message");
+		}*/
+		/*printf("semaphore given by down link task\n");
 		xSemaphoreGive( ( xIOSemaphore ) );
-		}
+		}*/
 	}
 }
 
@@ -457,14 +613,7 @@ void lora_init_task(void *pvParameters)
 	}
 }
 
-/*void vApplicationIdleHook(void)
-{
-	if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
-	{
-		printf(".");
-		xSemaphoreGive( ( xIOSemaphore ) );
-	}
-}*/
+
 /*-----------------------------------------------------------*/
 
 int main(void)

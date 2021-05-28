@@ -17,7 +17,6 @@ uint16_t read_CO2_ppm(){
 	
 	for (;;)
 	{
-		puts("Reading MHZ19\n");
 		rc = mh_z19_takeMeassuring();
 		if (rc != MHZ19_OK) {
 			puts("Error reading CO2 sensor");
@@ -27,15 +26,9 @@ uint16_t read_CO2_ppm(){
 			{
 				if (MHZ19_NO_MEASSURING_AVAILABLE!=mh_z19_getCo2Ppm(_co2ppm_pointer))
 				{
-					//printf("CO2 PPM: %d\n",_co2ppm );
 					return _co2ppm;
 				}
 			}
-			//rc=mh_z19_getCo2Ppm(_co2ppm_pointer);
-			
-			//vTaskDelay(pdMS_TO_TICKS(100));
-			//printf("CO2 PPM: %d\n",_co2ppm );
-			return _co2ppm;
 		}
 	}
 }
