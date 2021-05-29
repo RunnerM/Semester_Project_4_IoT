@@ -10,7 +10,7 @@
 #ifndef STATUSLED_HANDLER_H_
 #define STATUSLED_HANDLER_H_
 
-void setLED();
+void setLED(int num, int toOn);
 void initialize_status_leds();
 
 
