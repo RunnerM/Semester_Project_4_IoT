@@ -77,6 +77,7 @@ uint16_t Humidity;
 uint16_t CO2ppm;
 uint16_t Lux;
 bool flag;
+size_t xReceivedBytes;
 
 unsigned char message[2];
 
@@ -105,13 +106,13 @@ void create_tasks_and_semaphores(void)
 		}
 	}
 
-	/*xTaskCreate(
+	xTaskCreate(
 	TSL2591_reader
 	,  "sensor_reader_TSL"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	,  NULL );*/
+	,  NULL );
 	xTaskCreate(
 		HIH8120_reader
 		,  "sensor_reader_HIH"  // A name just for humans
@@ -564,10 +565,10 @@ void lora_downlink_task( void *pvParameters)
 		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
 			/*printf("semaphore taken by up downlink task\n");
 			printf("attempting reading of down link message\n");*/
-			size_t xReceivedBytes;
-			if (flag)
-			{
-				xReceivedBytes=xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), portMAX_DELAY);//let it timeout if there is no new message.
+			//if (flag)
+			//{
+				xReceivedBytes=0;
+				xReceivedBytes=xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), pdMS_TO_TICKS(100));//let it timeout if there is no new message.
 				flag=false;
 		
 			if (xReceivedBytes>0)
@@ -612,7 +613,7 @@ void lora_downlink_task( void *pvParameters)
 			}else{
 				puts("wrong format of down link message");
 			}*/
-			}
+			//}
 			/*printf("semaphore given by down link task\n");*/
 			xSemaphoreGive( ( xIOSemaphore ) );
 		}

@@ -11,6 +11,10 @@
 #include <ATMEGA_FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#include <event_groups.h>
+
+void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No);
+EventGroupHandle_t getEventGroup();
 
 float *_lux;
 
@@ -54,6 +58,7 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 				//here we can read.
 				
 				aFunctionToSetBits(getEventGroup(), 2);
+				printf("1\n");
 			}
 			else if (TSL2591_OVERFLOW == rc)
 			{
@@ -77,9 +82,7 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 }
 
 void read_lux(void* pvParameters){
-	(void)pvParameters;
-	tsl2591_returnCode_t rc;
-	float lux;	
+	(void)pvParameters;	
 	tsl2591_fetchData();
 	
 	}
