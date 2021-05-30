@@ -523,7 +523,8 @@ void lora_downlink_task( void *pvParameters)
 				{
 					message[0] = downlinkPayload.bytes[0];
 					message[1] = downlinkPayload.bytes[1];
-					if(message[0]==1){
+					if(message[0]==0){
+						/*
 						if(message[1]==0){
 							printf("Vent Off\n");
 							setPosition(100);
@@ -533,8 +534,11 @@ void lora_downlink_task( void *pvParameters)
 							printf("Vent On\n");
 							setPosition(-100);
 						}
-					}else if (message[0]==2)
+						*/
+						setposition(100);
+					}else if (message[0]==1)
 					{
+						/*
 						if(message[1]==0){
 							printf("Light Off\n");
 							setLED(4,0);
@@ -544,6 +548,16 @@ void lora_downlink_task( void *pvParameters)
 							printf("Light On\n");
 							setLED(4,1);
 						}
+						*/
+						setposition(-100);
+					}
+					else if (messgae[1] == 0)
+					{
+						setLED(4, 0);
+					}
+					else if (message[1] == 1)
+					{
+						setLED(4, 1);
 					}
 				
 				}else{
