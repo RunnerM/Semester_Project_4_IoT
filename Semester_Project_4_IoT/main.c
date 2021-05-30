@@ -76,7 +76,6 @@ uint16_t Temperature;
 uint16_t Humidity;
 uint16_t CO2ppm;
 uint16_t Lux;
-bool flag;
 size_t xReceivedBytes;
 
 unsigned char message[2];
@@ -158,13 +157,13 @@ void HIH8120_reader( void *pvParameters )
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 		{
-			puts("HIH");
+			printf("\nHIH\n");
 			result=readValueAll();
 			Temperature= result.temp;
 			Humidity= result.hum;
 			aFunctionToSetBits(xCreatedEventGroup,1);
 			//Giving back io semaphore.
-			printf("xIOsemaphore given sensor reader\n");
+			//printf("xIOsemaphore given sensor reader\n");
 			xSemaphoreGive( ( xIOSemaphore ) );
 		}else{
 			//timed out
@@ -182,11 +181,11 @@ void MHZ19_reader( void *pvParameters )
 			xTaskDelayUntil( &xLastWakeTime, xFrequency );
 			if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 			{
-				puts("MHZ");
+				printf("\nMHZ\n");
 				CO2ppm= read_CO2_ppm();
 				aFunctionToSetBits(xCreatedEventGroup,0);
 				//Giving back io semaphore.
-				printf("xIOsemaphore given sensor reader\n");
+				//printf("xIOsemaphore given sensor reader\n");
 				xSemaphoreGive( ( xIOSemaphore ) );
 				}else{
 				//timed out
@@ -194,7 +193,6 @@ void MHZ19_reader( void *pvParameters )
 			
 		}
 	}
-	
 void TSL2591_reader( void *pvParameters )
 	{
 		TickType_t xLastWakeTime;
@@ -205,13 +203,12 @@ void TSL2591_reader( void *pvParameters )
 			xTaskDelayUntil( &xLastWakeTime, xFrequency );
 			if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 			{
-				puts("TSL");
+				printf("\nTSL\n");
 				read_lux();
 				//the callback sets the bit.
 				
-				
 				//Giving back io semaphore.
-				printf("xIOsemaphore given sensor reader\n");
+				//printf("xIOsemaphore given sensor reader\n");
 				xSemaphoreGive( ( xIOSemaphore ) );
 				}else{
 				//timed out
@@ -237,16 +234,13 @@ void sendLoraPayload(){
 	
 	if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK )
 	{
-		printf("Lora message has been sent!");
-		flag=false;
+		printf("Lora message has been sent!\n");
+		
 	}
 	else if (rc == LORA_MAC_RX)
 	{
-		printf("Lora message has been sent down link message received!");
-		flag=true;
-		//Here execute task after down link message received.
+		printf("Lora message has been sent down link message received!\n");
 	}
-	//printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
 }
 
 void aFunctionToWaitBits( EventGroupHandle_t xEventGroup )
@@ -266,13 +260,11 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
   if( ( uxBits & ( BIT_0 | BIT_1 | BIT_2) ) == ( BIT_0 | BIT_1 | BIT_2) )
   {
       /* xEventGroupWaitBits() returned because both bits were set. */
-	  printf("setting the bits, they are set \n");
-	  // do application logic here.
 	  printf("Temp: %i \n", Temperature );
 	  printf("Hum: %i \n", Humidity );
 	  printf("CO2ppm: %i \n", CO2ppm);
 	  Lux= get_lux_value();
-	  printf(" Lux: %i \n", Lux);
+	  printf("Lux: %i \n", Lux);
 
 	  //lora up link send
 	  sendLoraPayload();
@@ -375,8 +367,6 @@ void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
 
 void initialiseSystem()
 {
-	
-	
 	xCreatedEventGroup = xEventGroupCreate();
 	if( xCreatedEventGroup == NULL )
 	{
@@ -389,18 +379,12 @@ void initialiseSystem()
 	}
 	// Set output ports for leds used in the example
 	DDRA |= _BV(DDA0) | _BV(DDA7);
-
 	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
 	stdio_initialise(ser_USART0);
-	
 	// Let's create some tasks
 	create_tasks_and_semaphores();
-
-	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Status Leds driver
 	initialize_status_leds();
-	
-	//initialize_status_leds(); // 
 	mh_z19_initialise(ser_USART3);
 	if ( HIH8120_OK == hih8120_initialise() )
 	{
@@ -409,21 +393,12 @@ void initialiseSystem()
 	if ( TSL2591_OK == tsl2591_initialise(&tsl2591Callback) )
 	{
 		if (TSL2591_OK == tsl2591_enable()) {
-			puts("Light sensor powered.");
 		}
 	}
-	
-	
 	rc_servo_initialise();	
-	
-	
-	
-	
-	// Initialise the LoRaWAN driver without down-link buffer
-	
+	// Initialize the LoRaWAN driver without down-link buffer
 	downLinkMessageBufferHandle = xMessageBufferCreate(sizeof(lora_driver_payload_t)*2); // Here I make room for two downlink messages in the message buffer
 	lora_driver_initialise(ser_USART1, downLinkMessageBufferHandle); // The parameter is the USART port the RN2483 module is connected to - in this case USART1 - here no message buffer for down-link messages are defined
-	
 	// Create LoRaWAN task and start it up with priority 3
 	lora_handler_initialise(3);
 }
@@ -493,28 +468,9 @@ static void _lora_setup(void)
 
 	if (rc == LORA_ACCEPTED)
 	{
-		// Connected to LoRaWAN :-)
-		// Make the green led steady
-		status_leds_ledOn(led_ST2); // OPTIONAL
-		// creating the up link and down link task when connected successfully.
-		/*xTaskCreate(
-		lora_uplink_task
-		,  "LR_up_link"  // A name just for humans
-		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
-		,  NULL
-		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-		,  NULL );*/
-		
-		/*xTaskCreate(
-		lora_downlink_task
-		,  "LR_down_link"  // A name just for humans
-		,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
-		,  NULL
-		,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-		,  NULL );*/
-		
-		printf("xIOsemaphore given by lora init\n");
+		status_leds_ledOn(led_ST2); 
 		xSemaphoreGive( ( xIOSemaphore ) );
+		//Lets stay here.
 		while (1)
 		{
 			taskYIELD();// this gives thread to other task.
@@ -523,14 +479,11 @@ static void _lora_setup(void)
 	}
 	else
 	{
-		// Something went wrong
-		// Turn off the green led
-		status_leds_ledOff(led_ST2); // OPTIONAL
-		// Make the red led blink fast to tell something went wrong
-		status_leds_fastBlink(led_ST1); // OPTIONAL
-		printf("xIOsemaphore given by lora init\n");
+		status_leds_ledOff(led_ST2); 
+		//This led is not working on our device.
+		status_leds_fastBlink(led_ST1);
 		xSemaphoreGive( ( xIOSemaphore ) );
-		// Lets stay here
+		// Lets stay here.
 		while (1)
 		{
 			taskYIELD();// this gives thread to other task.
@@ -553,10 +506,9 @@ void lora_uplink_task( void *pvParameters)
 
 void lora_downlink_task( void *pvParameters)
 {
-	//get message buffer from parameter;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(3000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(3000UL); // Attempt reading every (3000 ms)
 	xLastWakeTime = xTaskGetTickCount();
 	
 	for(;;)
@@ -565,56 +517,38 @@ void lora_downlink_task( void *pvParameters)
 		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
 				xReceivedBytes=0;
 				xReceivedBytes=xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), pdMS_TO_TICKS(100));//let it timeout if there is no new message.
-				flag=false;
+				
 		
 				if (xReceivedBytes>0)
 				{
-					printf("there was a down link message.\n");
 					message[0] = downlinkPayload.bytes[0];
 					message[1] = downlinkPayload.bytes[1];
 					if(message[0]==1){
 						if(message[1]==0){
-							printf("Vent On\n");
+							printf("Vent Off\n");
 							setPosition(100);
 						}else
 						if (message[1]==1)
 						{
-							printf("Vent Off");
+							printf("Vent On\n");
 							setPosition(-100);
 						}
 					}else if (message[0]==2)
 					{
 						if(message[1]==0){
-							setLED(4,0);
 							printf("Light Off\n");
-							//status_leds_ledOff(led_ST4);
+							setLED(4,0);
 						}else
 						if (message[1]==1)
 						{
+							printf("Light On\n");
 							setLED(4,1);
-							printf("Light On");
-							//status_leds_ledOn(led_ST4);
 						}
 					}
 				
 				}else{
 					printf("-");
 				}
-				//printf("from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
-				/*if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
-				{
-					// decode the payload into our variales
-					uint16_t payload_begin;
-					uint16_t payload_end;
-					payload_begin = (downlinkPayload.bytes[0] << 8) + downlinkPayload.bytes[1];
-					payload_end = (downlinkPayload.bytes[2] << 8) + downlinkPayload.bytes[3];
-			
-					printf("payload received: %i , %i",payload_begin,payload_end);
-				}else{
-					puts("wrong format of down link message");
-				}*/
-				//}
-				/*printf("semaphore given by down link task\n");*/
 				xSemaphoreGive( ( xIOSemaphore ) );
 		}
 	}
@@ -622,12 +556,10 @@ void lora_downlink_task( void *pvParameters)
 
 void lora_init_task(void *pvParameters)
 {
-	
 	for(;;){
 		
 		if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 		{
-			printf("xIOsemaphore taken by lora init\n");
 			// Hardware reset of LoRaWAN transceiver
 			lora_driver_resetRn2483(1);
 			vTaskDelay(2);
@@ -636,10 +568,7 @@ void lora_init_task(void *pvParameters)
 			vTaskDelay(150);
 
 			lora_driver_flushBuffers(); // get rid of first version string from module after reset!
-
 			_lora_setup();
-			printf("xIOsemaphore given by lora init\n");
-		xSemaphoreGive( ( xIOSemaphore ) );
 		}
 	}
 }

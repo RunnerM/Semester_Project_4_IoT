@@ -20,14 +20,14 @@ hih8120results readValueAll(){
 	
 	if (HIH8120_OK!=hih8120_wakeup())
 	{
-		puts("error with sensor hih8120 wakeup\n");
+		puts("error with sensor hih8120 wakeup");
 		}else{
 		vTaskDelay(xDelayWakeUp);
-		
 	}
 	if (HIH8120_OK!=hih8120_measure())
 	{
-		puts("error with sensor hih8120 maesure\n");
+		puts("error with sensor hih8120 measure\n");
+		return result;
 	}else
 	{
 		vTaskDelay(pdMS_TO_TICKS(10));
