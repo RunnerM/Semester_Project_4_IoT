@@ -16,12 +16,11 @@
 void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No);
 EventGroupHandle_t getEventGroup();
 
-float *_lux;
+float _lux;
 
 void tsl2591Callback(tsl2591_returnCode_t rc){
 	{
 		uint16_t _tmp;
-		float _lux;
 		switch (rc)
 		{
 			case TSL2591_DATA_READY:
@@ -54,11 +53,11 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 
 			if (TSL2591_OK == (rc = tsl2591_getLux(&_lux)))
 			{
-				printf("Lux: %5.4f\n", _lux);
+				//printf("Lux: %5.4f\n", _lux);
 				//here we can read.
 				
 				aFunctionToSetBits(getEventGroup(), 2);
-				printf("1\n");
+				//printf("1\n");
 			}
 			else if (TSL2591_OVERFLOW == rc)
 			{
@@ -81,12 +80,10 @@ void tsl2591Callback(tsl2591_returnCode_t rc){
 	
 }
 
-void read_lux(void* pvParameters){
-	(void)pvParameters;	
+void read_lux(){	
 	tsl2591_fetchData();
-	
-	}
+}
 	
 float get_lux_value(){
-		return *_lux;
+		return _lux;
 	}	

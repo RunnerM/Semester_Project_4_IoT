@@ -206,11 +206,10 @@ void TSL2591_reader( void *pvParameters )
 			if (xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE)
 			{
 				puts("TSL");
-				if (BIT_2==0)
-				{
-					read_lux();
-					//the callback sets the bit.
-				}
+				read_lux();
+				//the callback sets the bit.
+				
+				
 				//Giving back io semaphore.
 				printf("xIOsemaphore given sensor reader\n");
 				xSemaphoreGive( ( xIOSemaphore ) );
@@ -222,7 +221,7 @@ void TSL2591_reader( void *pvParameters )
 	}
 
 void sendLoraPayload(){
-	_uplink_payload.len = 6;
+	_uplink_payload.len = 8;
 	_uplink_payload.portNo = 2;
 	
 	_uplink_payload.bytes[0] = Humidity >> 8;
@@ -231,6 +230,8 @@ void sendLoraPayload(){
 	_uplink_payload.bytes[3] = Temperature & 0xFF;
 	_uplink_payload.bytes[4] = CO2ppm >> 8;
 	_uplink_payload.bytes[5] = CO2ppm & 0xFF;
+	_uplink_payload.bytes[6] = Lux >> 8;
+	_uplink_payload.bytes[7] = Lux & 0xFF;
 	
 	lora_driver_returnCode_t rc;
 	
@@ -257,12 +258,12 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
   the event group.  Clear the bits before exiting. */
   uxBits = xEventGroupWaitBits(
             xEventGroup,   /* The event group being tested. */
-            BIT_0 | BIT_1, /*| BIT_2 , /* The bits within the event group to wait for. */
+            BIT_0 | BIT_1 | BIT_2 , /* The bits within the event group to wait for. */
             pdFALSE,        /* BIT_0 & BIT_4 should not be cleared before returning. */
             pdTRUE,       /* Wait for both bits, either bit will do. */
             xTicksToWait );/* Wait a maximum of 100ms for either bit to be set. */
 
-  if( ( uxBits & ( BIT_0 | BIT_1 /*| BIT_2*/) ) == ( BIT_0 | BIT_1 /*| BIT_2*/) )
+  if( ( uxBits & ( BIT_0 | BIT_1 | BIT_2) ) == ( BIT_0 | BIT_1 | BIT_2) )
   {
       /* xEventGroupWaitBits() returned because both bits were set. */
 	  printf("setting the bits, they are set \n");
@@ -271,7 +272,7 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
 	  printf("Hum: %i \n", Humidity );
 	  printf("CO2ppm: %i \n", CO2ppm);
 	  Lux= get_lux_value();
-	  printf("%i \n", Lux);
+	  printf(" Lux: %i \n", Lux);
 
 	  //lora up link send
 	  sendLoraPayload();
@@ -285,11 +286,11 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
   {
       /* xEventGroupWaitBits() returned because just BIT_1 was set. */
   }
-  /*if( ( uxBits & BIT_2 ) != 0 )
+  if( ( uxBits & BIT_2 ) != 0 )
   {
 	  // xEventGroupWaitBits() returned because just BIT_2 was set. 
-	   puts("2");
-  }*/
+	   //puts("2");
+  }
   else
   {
       /* xEventGroupWaitBits() returned because xTicksToWait ticks passed
@@ -545,7 +546,6 @@ void lora_uplink_task( void *pvParameters)
 	
 	for(;;)
 	{
-		puts("lora upload.");
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		aFunctionToWaitBits(xCreatedEventGroup);
 	}
@@ -563,59 +563,59 @@ void lora_downlink_task( void *pvParameters)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		if(xSemaphoreTake(xIOSemaphore,pdMS_TO_TICKS(100))==pdTRUE){
-			/*printf("semaphore taken by up downlink task\n");
-			printf("attempting reading of down link message\n");*/
-			//if (flag)
-			//{
 				xReceivedBytes=0;
 				xReceivedBytes=xMessageBufferReceive(downLinkMessageBufferHandle, &downlinkPayload, sizeof(lora_driver_payload_t), pdMS_TO_TICKS(100));//let it timeout if there is no new message.
 				flag=false;
 		
-			if (xReceivedBytes>0)
-			{
-				printf("there was a down link message.\n");
-				message[0] = downlinkPayload.bytes[0];
-				message[1] = downlinkPayload.bytes[1];
-				if(message[0]==1){
-					if(message[1]==0){
-						setPosition(100);
-					}else
-					if (message[1]==1)
-					{
-						setPosition(-100);
-					}
-				}else if (message[0]==2)
+				if (xReceivedBytes>0)
 				{
-					if(message[1]==0){
-						//setLED(1,0);
-						status_leds_ledOff(led_ST4);
-					}else
-					if (message[1]==1)
+					printf("there was a down link message.\n");
+					message[0] = downlinkPayload.bytes[0];
+					message[1] = downlinkPayload.bytes[1];
+					if(message[0]==1){
+						if(message[1]==0){
+							printf("Vent On\n");
+							setPosition(100);
+						}else
+						if (message[1]==1)
+						{
+							printf("Vent Off");
+							setPosition(-100);
+						}
+					}else if (message[0]==2)
 					{
-						//setLED(1,1);
-						status_leds_ledOn(led_ST4);
+						if(message[1]==0){
+							setLED(4,0);
+							printf("Light Off\n");
+							//status_leds_ledOff(led_ST4);
+						}else
+						if (message[1]==1)
+						{
+							setLED(4,1);
+							printf("Light On");
+							//status_leds_ledOn(led_ST4);
+						}
 					}
-				}
 				
-			}else{
-				printf("there was no message.\n");
-			}
-			printf("from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
-			/*if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
-			{
-				// decode the payload into our variales
-				uint16_t payload_begin;
-				uint16_t payload_end;
-				payload_begin = (downlinkPayload.bytes[0] << 8) + downlinkPayload.bytes[1];
-				payload_end = (downlinkPayload.bytes[2] << 8) + downlinkPayload.bytes[3];
+				}else{
+					printf("-");
+				}
+				//printf("from port: %d with %d bytes received!", downlinkPayload.portNo, downlinkPayload.len); // Just for Debug
+				/*if (4 == downlinkPayload.len) // Check that we have got the expected 4 bytes
+				{
+					// decode the payload into our variales
+					uint16_t payload_begin;
+					uint16_t payload_end;
+					payload_begin = (downlinkPayload.bytes[0] << 8) + downlinkPayload.bytes[1];
+					payload_end = (downlinkPayload.bytes[2] << 8) + downlinkPayload.bytes[3];
 			
-				printf("payload received: %i , %i",payload_begin,payload_end);
-			}else{
-				puts("wrong format of down link message");
-			}*/
-			//}
-			/*printf("semaphore given by down link task\n");*/
-			xSemaphoreGive( ( xIOSemaphore ) );
+					printf("payload received: %i , %i",payload_begin,payload_end);
+				}else{
+					puts("wrong format of down link message");
+				}*/
+				//}
+				/*printf("semaphore given by down link task\n");*/
+				xSemaphoreGive( ( xIOSemaphore ) );
 		}
 	}
 }
