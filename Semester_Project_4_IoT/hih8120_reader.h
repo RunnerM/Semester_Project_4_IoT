@@ -6,7 +6,7 @@
  */ 
 
 #include <stdio.h>
-#include <avr/io.h>
+//#include <avr/io.h>
 
 #ifndef HIH8120_READER_H_
 #define HIH8120_READER_H_

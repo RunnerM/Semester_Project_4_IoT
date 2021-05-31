@@ -1,0 +1,37 @@
+﻿  test.cpp
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(4,19): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(31,39): error C2061: syntax error: identifier 'tsl2591_initialise'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(31,62): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(32,39): error C2061: syntax error: identifier 'tsl2591_enable'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(32,54): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(33,39): error C2061: syntax error: identifier 'tsl2591_fetchData'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(33,57): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(34,39): error C2061: syntax error: identifier 'tsl2591_getFullSpectrumRaw'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(34,77): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(35,39): error C2061: syntax error: identifier 'tsl259_getVisibleRaw'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(35,71): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(38,29): error C2061: syntax error: identifier 'xTaskCreate'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(38,129): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(39,44): error C2059: syntax error: ','
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(40,29): error C2061: syntax error: identifier 'xTaskGetTickCount'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(40,47): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(47,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(48,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(49,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(50,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(51,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(52,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(53,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(54,3): error C3861: 'RESET_FAKE': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(55,3): error C3861: 'FFF_RESET_HISTORY': identifier not found
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(66,2): error C2065: 'tsl2591_initialise_fake': undeclared identifier
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(68,2): error C2065: 'tsl2591_enable_fake': undeclared identifier
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(68,2): error C2660: 'testing::internal::EqHelper<false>::Compare': function does not take 3 arguments
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\include\gtest\gtest.h(1481,26): message : see declaration of 'testing::internal::EqHelper<false>::Compare'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(68,2): error C2512: 'testing::AssertionResult': no appropriate default constructor available
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\include\gtest\gtest.h(281,18): message : see declaration of 'testing::AssertionResult'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(75,2): error C2065: 'tsl2591_fetchData_fake': undeclared identifier
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(75,2): error C2660: 'testing::internal::EqHelper<false>::Compare': function does not take 3 arguments
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\include\gtest\gtest.h(1481,26): message : see declaration of 'testing::internal::EqHelper<false>::Compare'
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\Sep_Test\test.cpp(75,2): error C2512: 'testing::AssertionResult': no appropriate default constructor available
+D:\OneDrive - ViaUC\FreeRTOS Projects\Semester_Project_4_IoT\Sep_Test\Sep_Test\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\include\gtest\gtest.h(281,18): message : see declaration of 'testing::AssertionResult'

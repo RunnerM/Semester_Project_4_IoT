@@ -5,7 +5,7 @@
  *  Author: pente
  */ 
 #include <stdio.h>
-#include <avr/io.h>
+//#include <avr/io.h>
 
 #ifndef MHZ19_READER_H_
 #define MHZ19_READER_H_

@@ -6,7 +6,7 @@
  */ 
 
 #include <stdio.h>
-#include <avr/io.h>
+//#include <avr/io.h>
 #include <tsl2591.h>
 
 #ifndef LUXSENSOR_READER_H_

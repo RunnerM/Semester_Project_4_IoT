@@ -535,8 +535,9 @@ void lora_downlink_task( void *pvParameters)
 							setPosition(-100);
 						}
 						*/
-						setposition(100);
-					}else if (message[0]==1)
+						setPosition(100);
+					}
+					if (message[0]==1)
 					{
 						/*
 						if(message[1]==0){
@@ -549,13 +550,13 @@ void lora_downlink_task( void *pvParameters)
 							setLED(4,1);
 						}
 						*/
-						setposition(-100);
+						setPosition(-100);
 					}
-					else if (messgae[1] == 0)
+					if (message[1] == 0)
 					{
 						setLED(4, 0);
 					}
-					else if (message[1] == 1)
+					if (message[1] == 1)
 					{
 						setLED(4, 1);
 					}
