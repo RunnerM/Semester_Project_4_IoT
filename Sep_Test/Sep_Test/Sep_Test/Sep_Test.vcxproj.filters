@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="pch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\FakeFreeRTOS\timers.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\task.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\semphr.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\queue.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\message_buffer.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\FreeRTOSConfig.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\fff.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\event_groups.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\ATMEGA_FreeRTOS.h">
+      <Filter>FreeRTOS</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="FreeRTOS">
+      <UniqueIdentifier>{1bd55188-4367-404f-bb36-4352c687bb56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Production">
+      <UniqueIdentifier>{5e50dbe2-8131-4a4b-b8eb-a369c3528744}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
