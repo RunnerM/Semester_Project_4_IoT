@@ -8,6 +8,7 @@
 #include "mhz19_reader.h"
 #include <mh_z19.h>
 #include <ATMEGA_FreeRTOS.h>
+#include <stdint.h>
 
 uint16_t _co2ppm;
 uint16_t *_co2ppm_pointer;

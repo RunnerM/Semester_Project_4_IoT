@@ -10,7 +10,6 @@
 #define RCSERVO_HANDLER_H_
 
 
-void initialize();
 void setPosition(int position);
 
 

@@ -7,6 +7,7 @@
 #include "luxSensor_reader.h"
 #include <tsl2591.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <ATMEGA_FreeRTOS.h>
 #include <task.h>

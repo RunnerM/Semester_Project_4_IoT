@@ -8,6 +8,7 @@
 #include "hih8120_reader.h"
 #include <hih8120.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <ATMEGA_FreeRTOS.h>
 #include <task.h>

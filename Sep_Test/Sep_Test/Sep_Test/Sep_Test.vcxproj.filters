@@ -1,13 +1,78 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="ProductionTest.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\..\..\Semester_Project_4_IoT\hih8120_reader.c">
+      <Filter>production</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Semester_Project_4_IoT\luxSensor_reader.c">
+      <Filter>production</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Semester_Project_4_IoT\mhz19_reader.c">
+      <Filter>production</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Semester_Project_4_IoT\rcServo_handler.c">
+      <Filter>production</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Semester_Project_4_IoT\statusLED_handler.c">
+      <Filter>production</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="..\..\..\Semester_Project_4_IoT\hih8120_reader.h">
+      <Filter>production</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Semester_Project_4_IoT\luxSensor_reader.h">
+      <Filter>production</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Semester_Project_4_IoT\mhz19_reader.h">
+      <Filter>production</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Semester_Project_4_IoT\rcServo_handler.h">
+      <Filter>production</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Semester_Project_4_IoT\statusLED_handler.h">
+      <Filter>production</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\timers.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\task.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\semphr.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\queue.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\message_buffer.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\FreeRTOSConfig.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\fff.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\event_groups.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FakeFreeRTOS\ATMEGA_FreeRTOS.h">
+      <Filter>FakeFreeRTOS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="production">
+      <UniqueIdentifier>{77243dfc-4b2b-44fe-9df7-5be7e32ce7de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FakeFreeRTOS">
+      <UniqueIdentifier>{12df5fbd-70c1-45aa-86f0-774b1256a26b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #pragma once
-#include "FreeRTOS.h"
+#include "ATMEGA_FreeRTOS.h"
 
 typedef void * SemaphoreHandle_t;
 

@@ -7,9 +7,6 @@
 #include "rcServo_handler.h"
 #include <rc_servo.h>
 
-void initialize(){
-	rc_servo_initialise();
-}
 
 void setPosition(int pos){
 	rc_servo_setPosition(0,pos);

@@ -1,5 +1,5 @@
 #pragma once
-#include "FreeRTOS.h"
+#include "ATMEGA_FreeRTOS.h"
 
 typedef struct EventGroupDef_t* EventGroupHandle_t;
 typedef TickType_t EventBits_t;
