@@ -79,7 +79,7 @@ protected:
 	}
 };
 
-TEST(Test_LightTask, Test_if_sensor_is_enabled)
+TEST(Test_Light_Sensor_reader, Sensor_enabled)
 {
 	read_lux();
 	tsl2591_initialise_fake.return_val = TSL2591_OK;
@@ -87,20 +87,20 @@ TEST(Test_LightTask, Test_if_sensor_is_enabled)
 	EXPECT_EQ(1, tsl2591_enable_fake.call_count);
 }
 
-TEST(Test_LightTask, Test_if_light_driver_is_called) 
+TEST(Test_Light_Sensor_reader, Driver_called)
 {
 	get_lux_value();
 
 	EXPECT_EQ(1, tsl2591_fetchData_fake.call_count);
 }
 
-TEST(TestCO2Sensor, reading) {
+TEST(TestCO2SensorReader, reading) {
 	uint16_t testresult= read_CO2_ppm();
 
 	EXPECT_TRUE(testresult>0);
 }
 
-TEST(TestHIH8120Sensor, reading) {
+TEST(TestHIH8120SensorReader, reading) {
 	hih8120results result = readValueAll();
 
 	EXPECT_TRUE(0<result.hum<100);

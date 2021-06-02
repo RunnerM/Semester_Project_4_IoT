@@ -94,6 +94,9 @@ EventGroupHandle_t getEventGroup(){
 }
 
 /*-----------------------------------------------------------*/
+/** 
+\note This function is for creating tasks and IOSeamphore.
+*/
 void create_tasks_and_semaphores(void)
 {
 	if ( xIOSemaphore == NULL )  
@@ -146,6 +149,10 @@ void create_tasks_and_semaphores(void)
 		,  NULL );
 	
 }
+
+/** 
+\note Task to read the HIH8120 sensor.
+*/
 void HIH8120_reader( void *pvParameters )
 {
 	hih8120results result;
@@ -171,6 +178,10 @@ void HIH8120_reader( void *pvParameters )
 		
 	}
 	}
+	
+/** 
+\note Task for reading the MHZ19 sensor.
+*/
 void MHZ19_reader( void *pvParameters )
 	{
 		TickType_t xLastWakeTime;
@@ -193,6 +204,10 @@ void MHZ19_reader( void *pvParameters )
 			
 		}
 	}
+
+/** 
+\note Task to read TSL2591 sensor.
+*/
 void TSL2591_reader( void *pvParameters )
 	{
 		TickType_t xLastWakeTime;
@@ -216,7 +231,9 @@ void TSL2591_reader( void *pvParameters )
 			
 		}
 	}
-
+/** 
+\note Function for sending LoRa uplink payload.
+*/
 void sendLoraPayload(){
 	_uplink_payload.len = 8;
 	_uplink_payload.portNo = 2;
@@ -242,7 +259,9 @@ void sendLoraPayload(){
 		printf("Lora message has been sent down link message received!\n");
 	}
 }
-
+/** 
+\note Function responsible for waiting the event bits.
+*/
 void aFunctionToWaitBits( EventGroupHandle_t xEventGroup )
 {
 EventBits_t uxBits;
@@ -290,7 +309,9 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
 	  
   }
 }
-
+/** 
+\note Function responsible for clearing the event bits.
+*/
 void aFunctionToClearBits( EventGroupHandle_t xEventGroup )
 {
 EventBits_t uxBits;
@@ -325,7 +346,9 @@ EventBits_t uxBits;
       /* Neither bit 0 nor bit 4 were set in the first place. */
   }
 }
-
+/** 
+\note Function responsible for setting event bits. Takes two parameter an EventGroup and the number of the bit in the event group. 
+*/
 void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
 {
 	EventBits_t uxBits;
@@ -364,7 +387,9 @@ void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
 		/* bit 4 remained set when the function returned. */
 	}
 }
-
+/** 
+\note Function responsible for initializing all necessary drivers. 
+*/
 void initialiseSystem()
 {
 	xCreatedEventGroup = xEventGroupCreate();
@@ -404,7 +429,9 @@ void initialiseSystem()
 }
 	
 /*--------------------------LORA---------------------------------*/
-
+/** 
+\note Function for creating LoRA set up task.
+*/
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 {
 	xTaskCreate(
@@ -416,6 +443,9 @@ void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 	,  NULL );
 }
 
+/** 
+\note Function for initializing LoRA connection.
+*/
 static void _lora_setup(void)
 {
 	lora_driver_returnCode_t rc;
@@ -491,6 +521,9 @@ static void _lora_setup(void)
 	}
 }
 
+/** 
+\note Task for LoRA up link connection.
+*/
 void lora_uplink_task( void *pvParameters)
 {
 	TickType_t xLastWakeTime;
@@ -503,7 +536,9 @@ void lora_uplink_task( void *pvParameters)
 		aFunctionToWaitBits(xCreatedEventGroup);
 	}
 }
-
+/** 
+\note Task for LoRA down link connection.
+*/
 void lora_downlink_task( void *pvParameters)
 {
 
@@ -569,6 +604,9 @@ void lora_downlink_task( void *pvParameters)
 	}
 }
 
+/** 
+\note Task for LoRA initialization.
+*/
 void lora_init_task(void *pvParameters)
 {
 	for(;;){
@@ -588,9 +626,7 @@ void lora_init_task(void *pvParameters)
 	}
 }
 
-
 /*-----------------------------------------------------------*/
-
 int main(void)
 {
 	initialiseSystem(); // Must be done as the very first thing!!
