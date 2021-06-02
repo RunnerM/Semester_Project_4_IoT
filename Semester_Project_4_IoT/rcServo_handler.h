@@ -9,7 +9,10 @@
 #ifndef RCSERVO_HANDLER_H_
 #define RCSERVO_HANDLER_H_
 
-
+/**
+\brief Function to set servo position.
+\return void
+*/
 void setPosition(int position);
 
 
