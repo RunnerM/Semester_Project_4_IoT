@@ -1,3 +1,7 @@
+/**
+* @file main.c
+* This is main
+*/
 
 #include <stddef.h>
 #include <stdio.h>
@@ -48,22 +52,31 @@
 #define BIT_1   ( 1 << 1 )
 #define BIT_2	( 1 << 2 )
 
+
+/// Out Buffer
 static char _out_buf[100];
 // define Tasks
+
+/// HIH8120 Reader
 void HIH8120_reader( void *pvParameters );
+/// MHZ19 Reader
 void MHZ19_reader( void *pvParameters );
+/// TSL2591 Reader
 void TSL2591_reader( void *pvParameters );
+/// Uplink Task
 void lora_uplink_task( void *pvParameters );
+/// Downlink Task
 void lora_downlink_task( void *pvParameters );
+/// Init Task
 void lora_init_task( void *pvParameters );
 
 
 
 
-// define semaphore handle
+/// define semaphore handle
 SemaphoreHandle_t xIOSemaphore;// For serial connection.
 
-// Prototype for LoRaWAN handler
+/// Prototype for LoRaWAN handler
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
 void aFunctionToWaitBits( EventGroupHandle_t xEventGroup );
 void aFunctionToClearBits( EventGroupHandle_t xEventGroup );
@@ -72,10 +85,21 @@ EventGroupHandle_t getEventGroup();
 
 
 //globals--------
+
+
+/// Temperature variable
 uint16_t Temperature;
+
+/// Humidity variable
 uint16_t Humidity;
+
+///  CO2 variable
 uint16_t CO2ppm;
+
+/// Lux variable
 uint16_t Lux;
+
+/// Recieved Bytes variable
 size_t xReceivedBytes;
 
 unsigned char message[2];
@@ -94,6 +118,8 @@ EventGroupHandle_t getEventGroup(){
 }
 
 /*-----------------------------------------------------------*/
+
+/// Task and Semaphore Creation
 void create_tasks_and_semaphores(void)
 {
 	if ( xIOSemaphore == NULL )  
@@ -146,6 +172,8 @@ void create_tasks_and_semaphores(void)
 		,  NULL );
 	
 }
+
+/// HIH8120 Sensor Reader Task
 void HIH8120_reader( void *pvParameters )
 {
 	hih8120results result;
@@ -170,7 +198,9 @@ void HIH8120_reader( void *pvParameters )
 		}
 		
 	}
-	}
+}
+
+/// MHZ19 Sensor Reader Task
 void MHZ19_reader( void *pvParameters )
 	{
 		TickType_t xLastWakeTime;
@@ -193,6 +223,8 @@ void MHZ19_reader( void *pvParameters )
 			
 		}
 	}
+
+/// TSL2591 Sensor Reader Task
 void TSL2591_reader( void *pvParameters )
 	{
 		TickType_t xLastWakeTime;
@@ -217,6 +249,7 @@ void TSL2591_reader( void *pvParameters )
 		}
 	}
 
+/// Lora Payload Sending Task
 void sendLoraPayload(){
 	_uplink_payload.len = 8;
 	_uplink_payload.portNo = 2;
@@ -243,6 +276,10 @@ void sendLoraPayload(){
 	}
 }
 
+/**
+* Function to test event bits if they are set to 1
+* @param[in] xEventGroup
+*/
 void aFunctionToWaitBits( EventGroupHandle_t xEventGroup )
 {
 EventBits_t uxBits;
@@ -291,6 +328,10 @@ const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
   }
 }
 
+/**
+* Function to set all bits in an event group to 0
+* @param[in] xEventGroup
+*/
 void aFunctionToClearBits( EventGroupHandle_t xEventGroup )
 {
 EventBits_t uxBits;
@@ -326,6 +367,11 @@ EventBits_t uxBits;
   }
 }
 
+/**
+* Function to set bits to 1
+* @param[in] xEventGroup
+* @param[in] bit_No
+*/
 void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
 {
 	EventBits_t uxBits;
@@ -365,6 +411,7 @@ void aFunctionToSetBits( EventGroupHandle_t xEventGroup , int bit_No)
 	}
 }
 
+/// Function to initialise the system
 void initialiseSystem()
 {
 	xCreatedEventGroup = xEventGroupCreate();
@@ -405,6 +452,10 @@ void initialiseSystem()
 	
 /*--------------------------LORA---------------------------------*/
 
+/**
+* Function to create the LoraWan initialization task
+* @param[in] lora_handler_task_priority
+*/
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 {
 	xTaskCreate(
@@ -416,6 +467,7 @@ void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
 	,  NULL );
 }
 
+/// Function to setup the lora connection to be able to recieve and upload data
 static void _lora_setup(void)
 {
 	lora_driver_returnCode_t rc;
@@ -491,6 +543,7 @@ static void _lora_setup(void)
 	}
 }
 
+/// Function to upload to the LoraWan network
 void lora_uplink_task( void *pvParameters)
 {
 	TickType_t xLastWakeTime;
@@ -504,6 +557,7 @@ void lora_uplink_task( void *pvParameters)
 	}
 }
 
+/// Function to download from the LoraWan network
 void lora_downlink_task( void *pvParameters)
 {
 
@@ -569,6 +623,7 @@ void lora_downlink_task( void *pvParameters)
 	}
 }
 
+/// Function to initialize LoraWan tasks
 void lora_init_task(void *pvParameters)
 {
 	for(;;){
@@ -591,6 +646,8 @@ void lora_init_task(void *pvParameters)
 
 /*-----------------------------------------------------------*/
 
+
+/// Main Task
 int main(void)
 {
 	initialiseSystem(); // Must be done as the very first thing!!
