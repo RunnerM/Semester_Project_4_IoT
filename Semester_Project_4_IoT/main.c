@@ -58,8 +58,6 @@ void lora_downlink_task( void *pvParameters );
 void lora_init_task( void *pvParameters );
 
 
-
-
 // define semaphore handle
 SemaphoreHandle_t xIOSemaphore;// For serial connection.
 
